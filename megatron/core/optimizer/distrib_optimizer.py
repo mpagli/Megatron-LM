@@ -22,6 +22,7 @@ except ImportError:
         HAVE_APEX_OR_TE = False
 
 from .ademamix import AdEMAMix
+from .prodigy import Prodigy
 
 from .. import tensor_parallel
 from ..config_logger import has_config_logger_enabled, log_config_to_disk
@@ -501,8 +502,11 @@ class DistributedOptimizer(MixedPrecisionOptimizer):
                 self.optimizer_keys = ("param", "exp_avg_slow", "exp_avg_fast", "exp_avg_sq")
             else:
                 self.optimizer_keys = ("param", "exp_avg_slow", "exp_avg_sq")
+        elif isinstance(optimizer, Prodigy):
+            self.optimizer_name = 'prodigy'
+            self.optimizer_keys = ("param", "exp_avg", "exp_avg_sq", "s", "p0")
         else:
-            raise Exception(f"Unrecognized optimizer {type(optimizer)}, only Adam and AdEMAMix are supported for now.")
+            raise Exception(f"Unrecognized optimizer {type(optimizer)}.")
 
         # when freezing sub-models we have no real optimizer
         # but still need a stub DistributedOptimizer class
@@ -714,6 +718,8 @@ class DistributedOptimizer(MixedPrecisionOptimizer):
                                     tensors = {"exp_avg_slow": init_shard(), "exp_avg_fast": init_shard(), "exp_avg_sq": init_shard()}
                                 else: # beta1 == 0
                                     tensors = {"exp_avg_slow": init_shard(), "exp_avg_sq": init_shard()}
+                            elif self.optimizer_name == 'prodigy':
+                                tensors = {"exp_avg": init_shard(), "exp_avg_sq": init_shard(), "s": init_shard(), "p0": init_shard()}
                             if self.config.use_precision_aware_optimizer:
                                 tensors["master_param"] = init_shard()
                             state_dict_state.append((state_order, tensors))

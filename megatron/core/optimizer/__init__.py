@@ -24,6 +24,9 @@ except ImportError:
         from torch.optim import AdamW as Adam, SGD
 
 from .ademamix import AdEMAMix
+from .prodigy import Prodigy
+from .mars import MARS
+from .adopt import ADOPT
 
 from megatron.core import mpu
 
@@ -325,6 +328,31 @@ def _get_megatron_optimizer_based_on_param_groups(
                             opt.state[p]['exp_avg_sq'] = torch.zeros_like(p.data)
                         else:
                             opt.initialize_state(p)
+
+        elif config.optimizer == 'prodigy':
+            kwargs = {
+                "params": param_groups,
+                "lr": config.lr,
+                "weight_decay": config.weight_decay,
+                "betas": (config.adam_beta1, config.adam_beta2),
+                "beta3": config.prodigy_beta3,
+                "decouple": config.prodigy_decouple,
+                "use_bias_correction": config.prodigy_use_bias_correction,
+                "safeguard_warmup": config.prodigy_safeguard_warmup,
+                "fsdp_in_use": config.prodigy_fsdp_in_use,
+            }
+
+            optimizer = Prodigy(**kwargs)
+
+            def init_state_fn(opt, config=None):
+                for group in opt.param_groups:
+                    for p in group['params']:
+                        if 'step' not in opt.state[p]:
+                            opt.state[p]['step'] = 0
+                            opt.state[p]['s'] = torch.zeros_like(p.data).detach()
+                            opt.state[p]['p0'] = p.detach().clone()
+                            opt.state[p]['exp_avg'] = torch.zeros_like(p.data).detach()
+                            opt.state[p]['exp_avg_sq'] = torch.zeros_like(p.data).detach()
 
 
         elif config.optimizer == 'sgd':

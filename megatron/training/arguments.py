@@ -1261,6 +1261,16 @@ def _add_regularization_args(parser):
                        help='AdEMAMix warmup period for beta_3')
     group.add_argument('--ademamix-alpha-warmup', type=int, default=-1,
                        help='AdEMAMix warmup period for aplha')
+    group.add_argument('--prodigy-beta3', type=float, default=None, 
+                       help='If set to None, uses the value of square root of beta2')
+    group.add_argument('--prodigy-decouple', type=bool, default=True,
+                       help='Decoupled weight decay')
+    group.add_argument('--prodigy-use-bias-correction', type=bool, default=False,
+                       help='Use bias correction')
+    group.add_argument('--prodigy-safeguard-warmup', type=bool, default=False,
+                       help='Remove lr from the denominator of D estimate to avoid issues during warm-up stage')
+    group.add_argument('--prodigy-fsdp-in-use', type=bool, default=False,
+                       help='If set, use FSDP')
     group.add_argument('--adam-eps', type=float, default=1e-08,
                        help='Term added to the denominator to improve'
                        'numerical stability')
@@ -1463,7 +1473,7 @@ def _add_training_args(parser):
                        help='Enable bias only in the QKV linear layers',
                        dest='add_qkv_bias')
     group.add_argument('--optimizer', type=str, default='adam',
-                       choices=['adam', 'sgd', 'ademamix'],
+                       choices=['adam', 'sgd', 'ademamix', 'prodigy'],
                        help='Optimizer function')
     group.add_argument('--dataloader-type', type=str, default=None,
                        choices=['single', 'cyclic', 'external'],

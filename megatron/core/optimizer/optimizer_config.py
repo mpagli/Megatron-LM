@@ -118,6 +118,25 @@ class OptimizerConfig:
     ademamix_alpha_warmup: Optional[int] = None
     """Number of warmup steps used to increase alpha."""
 
+    # Prodigy
+    prodigy_beta3: Optional[float] = None
+    """coefficients for computing the Prodidy stepsize using running averages.
+    If set to None, uses the value of square root of beta2."""
+
+    prodigy_decouple: bool = True
+    """Use AdamW style decoupled weight decay."""
+
+    prodigy_use_bias_correction: bool = False
+    """Turn on Adam's bias correction. Off by default."""
+
+    prodigy_safeguard_warmup: bool = False
+    """Remove lr from the denominator of D estimate to avoid issues during warm-up stage. Off by default."""
+
+    prodigy_fsdp_in_use: bool = False
+    """If you're using sharded parameters, this should be set to True. The optimizer
+    will attempt to auto-detect this, but if you're using an implementation other
+    than PyTorch's builtin version, the auto-detection won't work.
+    """
 
     #######################
     # Distributed optimizer
