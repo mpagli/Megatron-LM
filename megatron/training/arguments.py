@@ -1291,7 +1291,11 @@ def _add_regularization_args(parser):
                        help='If set to False, we optimize 1D parameters with AdamW')
     group.add_argument('--mars-weight-decay-1d', type=float, default=0.1, 
                        help='Weight decay for 1D parameters')
-    group.add_argument()
+    group.add_argument('--adopt-eps', type=float, default=1e-6,
+                       help='Term added to the denominator to improve'
+                       'numerical stability')
+    group.add_argument('--adopt-decouple', type=bool, default=True,
+                       help='Decoupled weight decay')
     group.add_argument('--adam-eps', type=float, default=1e-08,
                        help='Term added to the denominator to improve'
                        'numerical stability')

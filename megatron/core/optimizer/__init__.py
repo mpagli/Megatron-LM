@@ -390,6 +390,27 @@ def _get_megatron_optimizer_based_on_param_groups(
                         else:
                             opt.initialize_state(p)
 
+        elif config.optimizer == 'adopt':
+            kwargs = {
+                "params": param_groups,
+                "lr": config.lr,
+                "weight_decay": config.weight_decay,
+                "betas": (config.adam_beta1, config.adam_beta2),
+                "eps": config.adopt_eps,
+                "decouple": config.adopt_decouple,
+            }
+
+            optimizer = ADOPT(**kwargs)
+
+            def init_state_fn(opt, config=None):
+                for group in opt.param_groups:
+                    for p in group['params']:
+                        if len(opt.state[p]) == 0:
+                            opt.state[p]['step'] = torch.tensor(0.0)
+                            opt.state[p]['exp_avg'] = torch.zeros_like(p.data)
+                            opt.state[p]['exp_avg_sq'] = torch.zeros_like(p.data)
+                        else:
+                            opt.initialize_state(p)
 
         elif config.optimizer == 'sgd':
             optimizer = SGD(

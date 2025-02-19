@@ -169,6 +169,12 @@ class OptimizerConfig:
     mars_weight_decay_1d: float = 0.1
     """The weight decay for 1D parameters in MARS."""
 
+    adopt_eps: float = 1e-6
+    """Term added to the denominator to improve numerical stability in ADOPT optimizer."""
+
+    adopt_decouple: bool = True
+    """Use AdamW style decoupled weight decay."""
+
     #######################
     # Distributed optimizer
     #######################
