@@ -138,6 +138,37 @@ class OptimizerConfig:
     than PyTorch's builtin version, the auto-detection won't work.
     """
 
+    mars_beta1: float = 0.95
+    """First coefficient for computing running averages of gradient and its square in Adam
+    optimizer.
+    """
+
+    mars_beta2: float = 0.99
+    """Second coefficient for computing running averages of gradient and its square in Adam
+    optimizer.
+    """
+
+    mars_type: str = 'mars-adamw'
+    """Which version of the MARS framework to use."""
+
+    mars_vr_gamma: float = 0.025
+    """The gamma parameter for the variance reduction term in MARS."""
+
+    mars_is_approx: bool = True
+    """Whether to use the approximate version of the MARS optimizer."""
+
+    mars_lr: float = 0.003
+    """The learning rate for the MARS optimizer."""
+
+    mars_amsgrad: bool = False
+    """Whether to use the AMSGrad variant of the MARS optimizer."""
+
+    mars_optimize_1d: bool = False
+    """If set to False, we optimize 1D parameters with AdamW."""
+
+    mars_weight_decay_1d: float = 0.1
+    """The weight decay for 1D parameters in MARS."""
+
     #######################
     # Distributed optimizer
     #######################

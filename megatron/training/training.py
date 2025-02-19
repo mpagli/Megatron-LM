@@ -784,7 +784,11 @@ def train_step(forward_step_func, data_iterator,
         # Set grad to zero.
         for model_chunk in model:
             model_chunk.zero_grad_buffer()
-        optimizer.zero_grad()
+        if optimizer.__class__.__name__ == "MARS":
+            optimizer.zero_grad(set_to_none=True)
+            optimizer.update_last_grad()
+        else:
+            optimizer.zero_grad()
 
         # Forward pass.
         forward_backward_func = get_forward_backward_func()

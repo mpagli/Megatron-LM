@@ -23,6 +23,7 @@ except ImportError:
 
 from .ademamix import AdEMAMix
 from .prodigy import Prodigy
+from .mars import MARS
 
 from .. import tensor_parallel
 from ..config_logger import has_config_logger_enabled, log_config_to_disk
@@ -505,6 +506,12 @@ class DistributedOptimizer(MixedPrecisionOptimizer):
         elif isinstance(optimizer, Prodigy):
             self.optimizer_name = 'prodigy'
             self.optimizer_keys = ("param", "exp_avg", "exp_avg_sq", "s", "p0")
+        elif isinstance(optimizer, MARS):
+            self.optimizer_name = 'mars'
+            if config.mars_amsgrad:
+                self.optimizer_keys = ("param", "exp_avg", "exp_avg_sq", "last_grad", "max_exp_avg_sq")
+            else:
+                self.optimizer_keys = ("param", "exp_avg", "exp_avg_sq", "last_grad")
         else:
             raise Exception(f"Unrecognized optimizer {type(optimizer)}.")
 
@@ -720,6 +727,11 @@ class DistributedOptimizer(MixedPrecisionOptimizer):
                                     tensors = {"exp_avg_slow": init_shard(), "exp_avg_sq": init_shard()}
                             elif self.optimizer_name == 'prodigy':
                                 tensors = {"exp_avg": init_shard(), "exp_avg_sq": init_shard(), "s": init_shard(), "p0": init_shard()}
+                            elif self.optimizer_name == 'mars':
+                                if len(self.optimizer_keys) == 5:
+                                    tensors = {"exp_avg": init_shard(), "exp_avg_sq": init_shard(), "last_grad": init_shard(), "max_exp_avg_sq": init_shard()}
+                                else:
+                                    tensors = {"exp_avg": init_shard(), "exp_avg_sq": init_shard(), "last_grad": init_shard()}
                             if self.config.use_precision_aware_optimizer:
                                 tensors["master_param"] = init_shard()
                             state_dict_state.append((state_order, tensors))

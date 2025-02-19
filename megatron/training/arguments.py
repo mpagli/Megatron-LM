@@ -1271,6 +1271,27 @@ def _add_regularization_args(parser):
                        help='Remove lr from the denominator of D estimate to avoid issues during warm-up stage')
     group.add_argument('--prodigy-fsdp-in-use', type=bool, default=False,
                        help='If set, use FSDP')
+    group.add_argument('--mars-beta1', type=float, default=0.95,
+                       help='First coefficient for computing running averages '
+                       'of gradient and its square')
+    group.add_argument('--mars-beta2', type=float, default=0.99,
+                       help='Second coefficient for computing running averages '
+                       'of gradient and its square')
+    group.add_argument('--mars-type', type=str, default='mars-adamw', choices=['mars-adamw', 'mars-lion', 'mars-shampoo'],
+                       help='Which version of the MARS framework to use')
+    group.add_argument('--mars-vr-gamma', type=float, default=0.025,
+                       helpt='Variance Reduction scaling factor')
+    group.add_argument('--mars-is-approx', type=bool, default=True, 
+                       help='If set, use the approximate version of MARS')
+    group.add_argument('--mars-lr', type=float, default=0.003,
+                       help='Learning rate for MARS')
+    group.add_argument('--mars-amsgrad', type=bool, default=False,
+                       help='If set, use AMSGrad for MARS')
+    group.add_argument('--mars-optimize-1d', type=bool, default=False,
+                       help='If set to False, we optimize 1D parameters with AdamW')
+    group.add_argument('--mars-weight-decay-1d', type=float, default=0.1, 
+                       help='Weight decay for 1D parameters')
+    group.add_argument()
     group.add_argument('--adam-eps', type=float, default=1e-08,
                        help='Term added to the denominator to improve'
                        'numerical stability')
@@ -1473,7 +1494,7 @@ def _add_training_args(parser):
                        help='Enable bias only in the QKV linear layers',
                        dest='add_qkv_bias')
     group.add_argument('--optimizer', type=str, default='adam',
-                       choices=['adam', 'sgd', 'ademamix', 'prodigy'],
+                       choices=['adam', 'sgd', 'ademamix', 'prodigy', 'mars', 'adopt'],
                        help='Optimizer function')
     group.add_argument('--dataloader-type', type=str, default=None,
                        choices=['single', 'cyclic', 'external'],
