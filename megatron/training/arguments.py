@@ -1280,7 +1280,7 @@ def _add_regularization_args(parser):
     group.add_argument('--mars-type', type=str, default='mars-adamw', choices=['mars-adamw', 'mars-lion', 'mars-shampoo'],
                        help='Which version of the MARS framework to use')
     group.add_argument('--mars-vr-gamma', type=float, default=0.025,
-                       helpt='Variance Reduction scaling factor')
+                       help='Variance Reduction scaling factor')
     group.add_argument('--mars-is-approx', type=bool, default=True, 
                        help='If set, use the approximate version of MARS')
     group.add_argument('--mars-lr', type=float, default=0.003,
