@@ -404,11 +404,10 @@ def _get_megatron_optimizer_based_on_param_groups(
 
             def init_state_fn(opt, config=None):
                 for group in opt.param_groups:
-                    for p in group['params']:
+                    for p in group["params"]:
                         if len(opt.state[p]) == 0:
-                            opt.state[p]['step'] = torch.tensor(0.0)
-                            opt.state[p]['exp_avg'] = torch.zeros_like(p.data)
-                            opt.state[p]['exp_avg_sq'] = torch.zeros_like(p.data)
+                            opt.state[p]["exp_avg"] = torch.zeros_like(p.data)
+                            opt.state[p]["exp_avg_sq"] = torch.zeros_like(p.data)
                         else:
                             opt.initialize_state(p)
 

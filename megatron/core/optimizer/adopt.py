@@ -15,6 +15,27 @@ from typing import Callable, Optional, Tuple
 import torch
 
 
+"""
+Here is an original implementation of ADOPT. 
+Source: https://github.com/iShohei220/adopt
+"""
+
+import torch
+
+
+def exists(val):
+    return val is not None
+
+
+from typing import Callable, Optional, Tuple
+
+import torch
+
+
+def adopt_clip_fn(step: int) -> float:
+    return step ** 0.25
+
+
 class ADOPT(torch.optim.Optimizer):
     def __init__(
         self,
@@ -22,7 +43,7 @@ class ADOPT(torch.optim.Optimizer):
         lr: float = 1e-3,
         betas: Tuple[float, float] = (0.9, 0.9999),
         eps: float = 1e-6,
-        clip_lambda: Optional[Callable[[int], float]] = lambda step: step**0.25,
+        clip_lambda: Optional[Callable[[int], float]] = adopt_clip_fn,
         weight_decay: float = 0.0,
         decouple: bool = True,
     ):
@@ -37,12 +58,18 @@ class ADOPT(torch.optim.Optimizer):
         if not 0.0 <= weight_decay:
             raise ValueError(f"Invalid weight_decay value: {weight_decay}")
 
-        self.clip_lambda = clip_lambda
         defaults = dict(
-            lr=lr, betas=betas, eps=eps, weight_decay=weight_decay, decouple=decouple
+            lr=lr,
+            betas=betas,
+            eps=eps,
+            weight_decay=weight_decay,
+            decouple=decouple,
+            clip_lambda=clip_lambda,
+            step=0,
         )
         super().__init__(params, defaults)
 
+    @torch.no_grad()
     def step(self, closure=None):
         loss = None
         if closure is not None:
@@ -50,65 +77,47 @@ class ADOPT(torch.optim.Optimizer):
                 loss = closure()
 
         for group in self.param_groups:
-            params_with_grad = []
-            grads = []
-            exp_avgs = []
-            exp_avg_sqs = []
+            group["step"] += 1
+            step = group["step"]
             beta1, beta2 = group["betas"]
+            lr = group["lr"]
 
             for p in group["params"]:
                 if p.grad is None:
                     continue
+                grad = p.grad
 
-                if p.grad.is_sparse:
+                if grad.is_sparse:
                     raise RuntimeError("ADOPT does not support sparse gradients")
-
-                params_with_grad.append(p)
-                grads.append(p.grad)
 
                 state = self.state[p]
 
-                if len(state) == 0:
-                    state["step"] = 0
-                    state["exp_avg"] = torch.zeros_like(
-                        p, memory_format=torch.preserve_format
-                    )
-                    state["exp_avg_sq"] = torch.zeros_like(
-                        p, memory_format=torch.preserve_format
-                    )
+                if len(state) ==0:
+                    state["exp_avg"] = torch.zeros_like(p, memory_format=torch.preserve_format)
+                    state["exp_avg_sq"] = torch.zeros_like(p, memory_format=torch.preserve_format)
 
-                exp_avgs.append(state["exp_avg"])
-                exp_avg_sqs.append(state["exp_avg_sq"])
+                exp_avg = state["exp_avg"]
+                exp_avg_sq = state["exp_avg_sq"]
 
-            for i, param in enumerate(params_with_grad):
-                grad = grads[i]
-                exp_avg = exp_avgs[i]
-                exp_avg_sq = exp_avg_sqs[i]
-                state = self.state[param]
-                step = state["step"]
-
-                if step == 0:
+                if step == 1:
                     exp_avg_sq.addcmul_(grad, grad)
-                    state["step"] += 1
                     continue
 
                 if group["weight_decay"] != 0:
                     if group["decouple"]:
-                        param.data.mul_(1 - group["lr"] * group["weight_decay"])
+                        p.data.mul_(1 - lr * group["weight_decay"])
                     else:
-                        grad = grad.add(param, alpha=group["weight_decay"])
+                        grad = grad.add(p, alpha=group["weight_decay"])
 
                 denom = torch.clamp(exp_avg_sq.sqrt(), group["eps"])
                 normed_grad = grad.div(denom)
 
-                if self.clip_lambda is not None:
-                    clip = self.clip_lambda(step)
+                if group["clip_lambda"] is not None:
+                    clip = group["clip_lambda"](step)
                     normed_grad.clamp_(-clip, clip)
 
                 exp_avg.lerp_(normed_grad, 1 - beta1)
-                param.data.add_(exp_avg, alpha=-group["lr"])
+                p.data.add_(exp_avg, alpha=-lr)
                 exp_avg_sq.mul_(beta2).addcmul_(grad, grad, value=1 - beta2)
-
-                state["step"] += 1
 
         return loss
