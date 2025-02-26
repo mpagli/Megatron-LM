@@ -15,23 +15,6 @@ from typing import Callable, Optional, Tuple
 import torch
 
 
-"""
-Here is an original implementation of ADOPT. 
-Source: https://github.com/iShohei220/adopt
-"""
-
-import torch
-
-
-def exists(val):
-    return val is not None
-
-
-from typing import Callable, Optional, Tuple
-
-import torch
-
-
 def adopt_clip_fn(step: int) -> float:
     return step ** 0.25
 
@@ -77,8 +60,8 @@ class ADOPT(torch.optim.Optimizer):
                 loss = closure()
 
         for group in self.param_groups:
-            group["step"] += 1
-            step = group["step"]
+            group['step'] += 1
+            step = group['step']
             beta1, beta2 = group["betas"]
             lr = group["lr"]
 
