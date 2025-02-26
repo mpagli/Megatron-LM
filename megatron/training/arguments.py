@@ -1301,6 +1301,15 @@ def _add_regularization_args(parser):
     group.add_argument('--adam-eps', type=float, default=1e-08,
                        help='Term added to the denominator to improve'
                        'numerical stability')
+    group.add_argument('--muon-matched-adamw-rms', type=float, default=0.2,
+                       help="The RMS of the matched AdamW's, typically 0.2 ~ 0.4")
+    group.add_argument('--muon-momentum', type=float, default=0.95,
+                       help='Momentum beta for muon')
+    group.add_argument('--muon-ns-steps', type=int, default=5,
+                       help='Number of Newton-Schultz iteartion steps for muon')
+    group.add_argument('--no-muon-nesterov', action='store_false',
+                       dest='muon_nesterov', default=True,
+                       help='If set, disable Nesterov momentum for muon')
     group.add_argument('--sgd-momentum', type=float, default=0.9,
                        help='Momentum factor for sgd')
     return parser
