@@ -101,7 +101,7 @@ class OptimizerConfig:
     adam_eps: float = 1e-08
     """Term added to the denominator to improve numerical stability in Adam optimizer."""
 
-    # SGD.
+    # SGD
     sgd_momentum: float = 0.9
     """Momentum factor for SGD optimizer."""
 
@@ -138,6 +138,7 @@ class OptimizerConfig:
     than PyTorch's builtin version, the auto-detection won't work.
     """
 
+    # MARS
     mars_beta1: float = 0.95
     """First coefficient for computing running averages of gradient and its square in Adam
     optimizer.
@@ -169,11 +170,25 @@ class OptimizerConfig:
     mars_weight_decay_1d: float = 0.1
     """The weight decay for 1D parameters in MARS."""
 
+    # ADOPT
     adopt_eps: float = 1e-6
     """Term added to the denominator to improve numerical stability in ADOPT optimizer."""
 
     adopt_decouple: bool = True
     """Use AdamW style decoupled weight decay."""
+
+    # Muon
+    muon_momentum: float = 0.95
+    """Momentum factor for Muon optimizer."""
+
+    muon_nesterov: bool = True
+    """Whether or not to use Nesterov momentum for Muon."""
+
+    muon_ns_steps: int = 5
+    """The number of Newton-Schulz iterations."""
+
+    muon_matched_adamw_rms: float = 0.2
+    """The adamw update rms that muon is designed to matched, typicially 0.2 ~ 0.4"""
 
     #######################
     # Distributed optimizer
