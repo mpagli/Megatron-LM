@@ -24,6 +24,9 @@ except ImportError:
         from torch.optim import AdamW as Adam, SGD
 
 from .ademamix import AdEMAMix
+from .prodigy import Prodigy
+from .mars import MARS, exists
+from .adopt import ADOPT
 
 from megatron.core import mpu
 
@@ -326,6 +329,87 @@ def _get_megatron_optimizer_based_on_param_groups(
                         else:
                             opt.initialize_state(p)
 
+        elif config.optimizer == 'prodigy':
+            kwargs = {
+                "params": param_groups,
+                "lr": config.lr,
+                "weight_decay": config.weight_decay,
+                "betas": (config.adam_beta1, config.adam_beta2),
+                "beta3": config.prodigy_beta3,
+                "decouple": config.prodigy_decouple,
+                "use_bias_correction": config.prodigy_use_bias_correction,
+                "safeguard_warmup": config.prodigy_safeguard_warmup,
+                "fsdp_in_use": config.prodigy_fsdp_in_use,
+            }
+
+            optimizer = Prodigy(**kwargs)
+
+            def init_state_fn(opt, config=None):
+                for group in opt.param_groups:
+                    for p in group['params']:
+                        if 'step' not in opt.state[p]:
+                            opt.state[p]['step'] = 0
+                            opt.state[p]['s'] = torch.zeros_like(p.data).detach()
+                            opt.state[p]['p0'] = p.detach().clone()
+                            opt.state[p]['exp_avg'] = torch.zeros_like(p.data).detach()
+                            opt.state[p]['exp_avg_sq'] = torch.zeros_like(p.data).detach()
+                        else:
+                            opt.initialize_state(p)
+
+        elif config.optimizer == 'mars':
+            kwargs = {
+                "params": param_groups,
+                "lr": config.mars_lr,
+                "betas": (config.mars_beta1, config.mars_beta2),
+                "weight_decay": config.weight_decay,
+                "amsgrad": config.mars_amsgrad,
+                "gamma": config.mars_vr_gamma,
+                "is_approx": config.mars_is_approx,
+                "mars_type": config.mars_type,
+                "optimize_1d": config.mars_optimize_1d,
+                "lr_1d": config.lr,
+                "betas_1d": (config.adam_beta1, config.adam_beta2),
+                "weight_decay_1d": config.mars_weight_decay_1d,
+            }
+
+            optimizer = MARS(**kwargs)
+
+            def init_state_fn(opt, config=None):
+                for group in opt.param_groups:
+                    for p in filter(lambda p: exists(p.grad), group["params"]):
+                        amsgrad = group["amsgrad"]
+                        if len(opt.state[p]) <= 1:
+                            opt.state[p]["step"] = 0
+                            opt.state[p]["exp_avg"] = torch.zeros_like(p.data)
+                            opt.state[p]["last_grad"] = torch.zeros_like(p.data)
+                            opt.state[p]["exp_avg_sq"] = torch.zeros_like(p.data)
+                            if amsgrad:
+                                opt.state[p]["max_exp_avg_sq"] = torch.zeros_like(p.data)
+                            if amsgrad and "max_exp_avg_sq" not in opt.state[p]:
+                                opt.state[p]["max_exp_avg_sq"] = torch.zeros_like(p.data)
+                        else:
+                            opt.initialize_state(p)
+
+        elif config.optimizer == 'adopt':
+            kwargs = {
+                "params": param_groups,
+                "lr": config.lr,
+                "weight_decay": config.weight_decay,
+                "betas": (config.adam_beta1, config.adam_beta2),
+                "eps": config.adopt_eps,
+                "decouple": config.adopt_decouple,
+            }
+
+            optimizer = ADOPT(**kwargs)
+
+            def init_state_fn(opt, config=None):
+                for group in opt.param_groups:
+                    for p in group["params"]:
+                        if len(opt.state[p]) == 0:
+                            opt.state[p]["exp_avg"] = torch.zeros_like(p.data)
+                            opt.state[p]["exp_avg_sq"] = torch.zeros_like(p.data)
+                        else:
+                            opt.initialize_state(p)
 
         elif config.optimizer == 'sgd':
             optimizer = SGD(

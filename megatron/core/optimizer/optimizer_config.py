@@ -118,6 +118,62 @@ class OptimizerConfig:
     ademamix_alpha_warmup: Optional[int] = None
     """Number of warmup steps used to increase alpha."""
 
+    # Prodigy
+    prodigy_beta3: Optional[float] = None
+    """coefficients for computing the Prodidy stepsize using running averages.
+    If set to None, uses the value of square root of beta2."""
+
+    prodigy_decouple: bool = True
+    """Use AdamW style decoupled weight decay."""
+
+    prodigy_use_bias_correction: bool = False
+    """Turn on Adam's bias correction. Off by default."""
+
+    prodigy_safeguard_warmup: bool = False
+    """Remove lr from the denominator of D estimate to avoid issues during warm-up stage. Off by default."""
+
+    prodigy_fsdp_in_use: bool = False
+    """If you're using sharded parameters, this should be set to True. The optimizer
+    will attempt to auto-detect this, but if you're using an implementation other
+    than PyTorch's builtin version, the auto-detection won't work.
+    """
+
+    mars_beta1: float = 0.95
+    """First coefficient for computing running averages of gradient and its square in Adam
+    optimizer.
+    """
+
+    mars_beta2: float = 0.99
+    """Second coefficient for computing running averages of gradient and its square in Adam
+    optimizer.
+    """
+
+    mars_type: str = 'mars-adamw'
+    """Which version of the MARS framework to use."""
+
+    mars_vr_gamma: float = 0.025
+    """The gamma parameter for the variance reduction term in MARS."""
+
+    mars_is_approx: bool = True
+    """Whether to use the approximate version of the MARS optimizer."""
+
+    mars_lr: float = 0.003
+    """The learning rate for the MARS optimizer."""
+
+    mars_amsgrad: bool = False
+    """Whether to use the AMSGrad variant of the MARS optimizer."""
+
+    mars_optimize_1d: bool = False
+    """If set to False, we optimize 1D parameters with AdamW."""
+
+    mars_weight_decay_1d: float = 0.1
+    """The weight decay for 1D parameters in MARS."""
+
+    adopt_eps: float = 1e-6
+    """Term added to the denominator to improve numerical stability in ADOPT optimizer."""
+
+    adopt_decouple: bool = True
+    """Use AdamW style decoupled weight decay."""
 
     #######################
     # Distributed optimizer

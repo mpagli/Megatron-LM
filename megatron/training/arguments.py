@@ -1220,6 +1220,8 @@ def _add_logging_args(parser):
                        help='Enable world size logging to tensorboard.')
     group.add_argument('--wandb-project', type=str, default='',
                        help='The wandb project name. Ignore wandb by default.')
+    group.add_argument('--wandb-entity', type=str, default='',
+                       help='The wandb entity name. Ignore wandb by default.')
     group.add_argument('--wandb-exp-name', type=str, default='',
                        help='The wandb experiment name.')
     group.add_argument('--wandb-save-dir', type=str, default='',
@@ -1261,6 +1263,41 @@ def _add_regularization_args(parser):
                        help='AdEMAMix warmup period for beta_3')
     group.add_argument('--ademamix-alpha-warmup', type=int, default=-1,
                        help='AdEMAMix warmup period for aplha')
+    group.add_argument('--prodigy-beta3', type=float, default=None, 
+                       help='If set to None, uses the value of square root of beta2')
+    group.add_argument('--prodigy-decouple', type=bool, default=True,
+                       help='Decoupled weight decay')
+    group.add_argument('--prodigy-use-bias-correction', type=bool, default=False,
+                       help='Use bias correction')
+    group.add_argument('--prodigy-safeguard-warmup', type=bool, default=False,
+                       help='Remove lr from the denominator of D estimate to avoid issues during warm-up stage')
+    group.add_argument('--prodigy-fsdp-in-use', type=bool, default=False,
+                       help='If set, use FSDP')
+    group.add_argument('--mars-beta1', type=float, default=0.95,
+                       help='First coefficient for computing running averages '
+                       'of gradient and its square')
+    group.add_argument('--mars-beta2', type=float, default=0.99,
+                       help='Second coefficient for computing running averages '
+                       'of gradient and its square')
+    group.add_argument('--mars-type', type=str, default='mars-adamw', choices=['mars-adamw', 'mars-lion', 'mars-shampoo'],
+                       help='Which version of the MARS framework to use')
+    group.add_argument('--mars-vr-gamma', type=float, default=0.025,
+                       help='Variance Reduction scaling factor')
+    group.add_argument('--mars-is-approx', type=bool, default=True, 
+                       help='If set, use the approximate version of MARS')
+    group.add_argument('--mars-lr', type=float, default=0.003,
+                       help='Learning rate for MARS')
+    group.add_argument('--mars-amsgrad', type=bool, default=False,
+                       help='If set, use AMSGrad for MARS')
+    group.add_argument('--mars-optimize-1d', type=bool, default=False,
+                       help='If set to False, we optimize 1D parameters with AdamW')
+    group.add_argument('--mars-weight-decay-1d', type=float, default=0.1, 
+                       help='Weight decay for 1D parameters')
+    group.add_argument('--adopt-eps', type=float, default=1e-6,
+                       help='Term added to the denominator to improve'
+                       'numerical stability')
+    group.add_argument('--adopt-decouple', type=bool, default=True,
+                       help='Decoupled weight decay')
     group.add_argument('--adam-eps', type=float, default=1e-08,
                        help='Term added to the denominator to improve'
                        'numerical stability')
@@ -1463,7 +1500,7 @@ def _add_training_args(parser):
                        help='Enable bias only in the QKV linear layers',
                        dest='add_qkv_bias')
     group.add_argument('--optimizer', type=str, default='adam',
-                       choices=['adam', 'sgd', 'ademamix'],
+                       choices=['adam', 'sgd', 'ademamix', 'prodigy', 'mars', 'adopt'],
                        help='Optimizer function')
     group.add_argument('--dataloader-type', type=str, default=None,
                        choices=['single', 'cyclic', 'external'],
