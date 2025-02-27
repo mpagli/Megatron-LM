@@ -349,7 +349,7 @@ class DistributedOptimizer(MixedPrecisionOptimizer):
 
                 gbuf_index, dtype, bucket_index = param_gbuf_map[model_param]
                 gbuf_range = gbuf_ranges[gbuf_index][dtype][bucket_index]
-                param_range = gbuf_range["param_map"][model_param]["param"]
+                param_gbuf_ranges = gbuf_range["param_map"][model_param]
                 param_range = param_gbuf_ranges["param"]
 
                 # gen dist meta
@@ -533,15 +533,6 @@ class DistributedOptimizer(MixedPrecisionOptimizer):
             self.optimizer_keys = ("param", "exp_avg", "exp_avg_sq")
         elif isinstance(optimizer, Muon):
             self.optimizer_name = 'muon'
-            assert all(grad_buffer.grad_dtype == torch.float32 for grad_buffer in self.buffers), \
-                    "all grad buffer should only contains float32 type for muon optimizer"
-                gbuf_sizes = [ [(bucket.grad_data.numel(), bucket.offset) for bucket in buffer.buckets ]
-                                for buffer in self.buffers ]
-                self.optimizer.enable_distributed_mode(
-                    gbuf_sizes, self.data_parallel_group,
-                    get_tensor_model_parallel_group(),
-                    dist_metas,
-                )
         else:
             raise Exception(f"Unrecognized optimizer {type(optimizer)}.")
 
@@ -628,8 +619,8 @@ class DistributedOptimizer(MixedPrecisionOptimizer):
         self.optimizer.param_groups = [g["orig_group"] for g in self.opt_group_ranges]
         self.optimizer.load_state_dict(self.optimizer.state_dict())
 
-        elif isinstance(optimizer, Muon):
-            assert all(grad_buffer.grad_dtype == torch.float32 for grad_buffer in self.buffers), \
+        if isinstance(self.optimizer, Muon):
+                assert all(grad_buffer.grad_dtype == torch.float32 for grad_buffer in self.buffers), \
                     "all grad buffer should only contains float32 type for muon optimizer"
                 gbuf_sizes = [ [(bucket.grad_data.numel(), bucket.offset) for bucket in buffer.buckets ]
                                 for buffer in self.buffers ]

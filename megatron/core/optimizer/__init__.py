@@ -27,7 +27,7 @@ from .ademamix import AdEMAMix
 from .prodigy import Prodigy
 from .mars import MARS, exists
 from .adopt import ADOPT
-from .muom import Muon
+from .muon import Muon
 
 from megatron.core import mpu
 
